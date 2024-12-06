@@ -32,5 +32,6 @@
 3. Run your program with `<main-module-name>.exe`
 
 ## Helpful Resources
-- [Tutorials](https://go.dev/doc/tutorial/)
+- [Tutorial](https://go.dev/doc/tutorial/)
+- [Tour of Go](https://go.dev/tour/list)
 - [Go Docs](https://go.dev/ref/spec)
