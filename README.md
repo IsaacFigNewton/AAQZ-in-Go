@@ -2,6 +2,7 @@
 
 ## Getting Started
 1. [Install Go](https://go.dev/dl/)
+2. Add a Go plugin to your IDE if necessary
 
 ## Adding a module
 1. Create a new directory for the new module's packages
@@ -20,6 +21,10 @@
   1. `go mod edit -replace <module-name>/<package-name>=../<module-name>`
   2. `go mod tidy`
   3. `go run .`
+
+## Testing
+1. `cd <module-name-with-tests>`
+2. `go test`
 
 ## Helpful Resources
 - [Tutorials](https://go.dev/doc/tutorial/)
