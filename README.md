@@ -26,6 +26,11 @@
 1. `cd <module-name-with-tests>`
 2. `go test`
 
+## Compilation
+1. `cd <main-module-name>`
+2. Compile and build your program by running `go build`
+3. Run your program with `<main-module-name>.exe`
+
 ## Helpful Resources
 - [Tutorials](https://go.dev/doc/tutorial/)
 - [Go Docs](https://go.dev/ref/spec)
