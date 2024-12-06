@@ -1,64 +1,72 @@
 package main
 
 import (
-	"aaqz/env"
 	"fmt"
+	"os"
 )
 
-/*
-New types to add:
-
-(println s) → boolean
-  s : str
-
-(read-num) → real
-
-(read-str) → str
-
-(seq a b ...) → any
-  a : any
-  b : any*
-
-(++ a b ...) → string
-  a : any
-  b : any*
-
-test case:
-	{seq
-	{println "What is your favorite integer between 6 and 7?"}
-	{bind [your-number = {read-num}]
-		{println {++ "Interesting, you picked " your-number ". Bold choice!"}}}}
-*/
-
-/*
-Every function must have:
-	A commented header line that expresses the result of the function in terms of its inputs, written in English.
-		Be as precise as you can within the space of a line or two.
-	A type declaration (possibly inline), specifying the input and output types.
-	Test cases. A function without test cases is incomplete. Write the test cases first, please.
-*/
+// Tests an expression against an expected result
+func runTest(expr ExprC, env Env, expected string) {
+	val, err := interp(expr, env)
+	if err != nil {
+		fmt.Printf("Test failed (Expression: %T): error %v\n", expr, err)
+		os.Exit(1)
+	}
+	got := val.Serialize()
+	if got != expected {
+		fmt.Printf("Test failed.\nExpression: %#v\nExpected: %s\nGot: %s\n", expr, expected, got)
+		os.Exit(1)
+	} else {
+		fmt.Printf("Test passed: %T -> %s\n", expr, got)
+	}
+}
 
 func main() {
-	/*
-		focus on developing:
-			a representation of an AST
-			the interp function
-			the parsing function (if you have time left)
-	*/
+	env := topEnv()
 
-	/*
-		‹expr› ::=
-			| ‹num›		NumC
-			| ‹id›                           IdC
-			| ‹string›                       StrC
-			| { if ‹expr› ‹expr› ‹expr› }    IfC()		desugar into AppC during interp
-			| { bind ‹clause›* ‹expr› }      AppC(LamC())
-			| { (‹id›*) => ‹expr› }          LamC
-			| { ‹expr› ‹expr›* }             ?
+	// Basic tests
+	runTest(NumC{42}, env, "42")
+	runTest(IdC{"true"}, env, "true")
 
-		<clause> ::=
-			{ <id> <expr> }
-	*/
+	// Test addition
+	runTest(AppC{Fun: IdC{"+"}, Args: []ExprC{NumC{1}, NumC{2}}}, env, "3")
 
-	fmt.Println(env.TopEnv)
+	// If test
+	runTest(IfC{Test: IdC{"true"}, Then: NumC{1}, Else: NumC{0}}, env, "1")
+	runTest(IfC{Test: IdC{"false"}, Then: NumC{1}, Else: NumC{0}}, env, "0")
+
+	// Primops
+	runTest(AppC{Fun: IdC{"-"}, Args: []ExprC{NumC{5}, NumC{3}}}, env, "2")
+	runTest(AppC{Fun: IdC{"*"}, Args: []ExprC{NumC{4}, NumC{2}}}, env, "8")
+	runTest(AppC{Fun: IdC{"/"}, Args: []ExprC{NumC{6}, NumC{3}}}, env, "2")
+	runTest(AppC{Fun: IdC{"<="}, Args: []ExprC{NumC{3}, NumC{4}}}, env, "true")
+	runTest(AppC{Fun: IdC{"<="}, Args: []ExprC{NumC{5}, NumC{5}}}, env, "true")
+	runTest(AppC{Fun: IdC{"<="}, Args: []ExprC{NumC{6}, NumC{5}}}, env, "false")
+
+	// equal?
+	runTest(AppC{Fun: IdC{"equal?"}, Args: []ExprC{NumC{10}, NumC{10}}}, env, "true")
+	runTest(AppC{Fun: IdC{"equal?"}, Args: []ExprC{IdC{"true"}, IdC{"true"}}}, env, "true")
+	runTest(AppC{Fun: IdC{"equal?"}, Args: []ExprC{StringC{"hello"}, StringC{"hello"}}}, env, "true")
+	runTest(AppC{Fun: IdC{"equal?"}, Args: []ExprC{StringC{"hello"}, StringC{"world"}}}, env, "false")
+
+	// Lambda application: ((lambda (x) x) 5) = 5
+	lambdaExpr := LamC{
+		Params: []string{"x"},
+		Body:   IdC{"x"},
+	}
+	runTest(AppC{Fun: lambdaExpr, Args: []ExprC{NumC{5}}}, env, "5")
+
+	// Nested lambda test: (((lambda (x) (lambda (y) (+ x y))) 3) 4) = 7
+	nestedLambda := AppC{
+		Fun: AppC{
+			Fun: LamC{Params: []string{"x"},
+				Body: LamC{Params: []string{"y"},
+					Body: AppC{Fun: IdC{"+"}, Args: []ExprC{IdC{"x"}, IdC{"y"}}}}},
+			Args: []ExprC{NumC{3}},
+		},
+		Args: []ExprC{NumC{4}},
+	}
+	runTest(nestedLambda, env, "7")
+
+	fmt.Println("All tests passed.")
 }
